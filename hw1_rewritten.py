@@ -432,7 +432,7 @@ def main():
     print(colored(f'Team {TEAM1} wins: {win1:<5}', get_team_color(TEAM1)))
     print(colored(f'Team {TEAM2} wins: {win2:<5}', get_team_color(TEAM2)))
 
-
+    print(colored(f'Average Total Error: {total_error / (2*NUM_BATTLES):.4f}', "green"))
 
 
 main()
