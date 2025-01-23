@@ -275,7 +275,7 @@ def fitness_outcome(team1, team2):
 def main():
 
     # Number of battles to simulate.
-    NUM_BATTLES = 1
+    NUM_BATTLES = 100
     finalhealth1 = []
     finalhealth2 = []
     error1 = []
@@ -286,15 +286,15 @@ def main():
 
     ################################################
     # Use these to configure team composition
-    team1_tier0 = 0
-    team1_tier1 = 0
-    team1_tier2 = 0
-    team1_keys = {0:1}
+    team1_tier0 = 10
+    team1_tier1 = 10
+    team1_tier2 = 10
+    team1_keys = {}
     
-    team2_tier0 = 0
-    team2_tier1 = 0
-    team2_tier2 = 0
-    team2_keys = {0:1}
+    team2_tier0 = 10
+    team2_tier1 = 10
+    team2_tier2 = 10
+    team2_keys = {}
     #################################################
     
     for i in range(NUM_BATTLES):
