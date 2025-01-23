@@ -283,7 +283,7 @@ def battle(teamA, teamB, predictions, debug=False):
         
         if debug: 
             print(colored(f"ROUND {round}", "cyan"))
-            print(f"{colored('Agents Alive:','light_grey')} {colored(len(teamA.actors), 'red')} - {colored(len(teamB.actors), 'blue')}")
+            print(f"{colored('Actors Alive:','light_grey')} {colored(len(teamA.actors), 'red')} - {colored(len(teamB.actors), 'blue')}")
             print()
 
         aI = random.randrange(len(teamA.actors))
@@ -369,7 +369,7 @@ def fitness_outcome(team1, team2):
 def main():
 
     # Number of battles to simulate.
-    NUM_BATTLES = 1
+    NUM_BATTLES = 100
     finalhealth1 = []
     finalhealth2 = []
     error1 = []
@@ -413,7 +413,7 @@ def main():
 
 
         p1, p2 = fitness_outcome(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=True)
+        result1, result2 = battle(team1, team2, (p1, p2), debug=i % 100 == 0) # Only show one battle every 100 battles
 
         fh1 = result1/team1_health
         fh2 = result2/team2_health
