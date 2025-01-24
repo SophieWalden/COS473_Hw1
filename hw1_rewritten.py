@@ -515,7 +515,7 @@ def heuristic_faceoff(heuristic1, heuristic2):
 
 def test_winrate(heuristic):
      # Number of battles to simulate.
-    NUM_BATTLES = 10000
+    NUM_BATTLES = 1000
     finalhealth1 = []
     finalhealth2 = []
     error1 = []
@@ -540,24 +540,35 @@ def test_winrate(heuristic):
     wins = 0
     score_off, count = 0, 0
 
+    battles = []
+    seed = 243892 # RANDOM SEED TO AFFECT WHAT THE BATTLES ARE
     for i in range(NUM_BATTLES):
-        team1_tier1 = random.randint(1, 10)
-        team1_tier2 = random.randint(0, 10)
-        team1_tier3 = random.randint(0, 10)
-        team2_tier1 = random.randint(1, 10)
-        team2_tier2 = random.randint(0, 10)
-        team2_tier3 = random.randint(0, 10)
+        temp_battle = []
+        for _ in range(2):
+            units = {}
+
+            for j in range(15):
+                units[j] = (seed + (i * j)) % 4
+
+            if units[0] == 0: units[0] += 1
+
+            temp_battle.append(units)
+
+        battles.append(temp_battle)
+        seed = seed ** 2 % 243892
+
+    for i in range(NUM_BATTLES):
 
         team1 = gen_rand_team(TEAM1,
-                              team1_tier1,
-                              team1_tier2,
-                              team1_tier3,
-                              team1_keys)
+                              0,
+                              0,
+                              0,
+                              battles[i][0])
         team2 = gen_rand_team(TEAM2,
-                              team2_tier1,
-                              team2_tier2,
-                              team2_tier3,
-                              team2_keys)
+                              0,
+                              0,
+                              0,
+                              battles[i][1])
 
         team1_health = total_health_of_team(team1)
         team2_health = total_health_of_team(team2)
@@ -582,7 +593,7 @@ def test_winrate(heuristic):
 
 
     print(colored(f'Heuristic Winrate: {wins / NUM_BATTLES:.2%}', "red"))
-    print(colored(f'Heuristic Loss Off: {score_off / count:.2f}', "blue"))
+    print(colored(f'Heuristic Loss Off: {score_off / (1 if not count else count):.2f}', "blue"))
     print()
 
     print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
