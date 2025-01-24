@@ -198,7 +198,7 @@ const App = () => {
                 </div>
 
                 <div className="error-rate-display"> 
-                  <h4>Team 1 Average Error Rate</h4>
+                  <h4>Team 2 Average Error Rate</h4>
                   
                   <div className="circle-results">
                     <CircularProgressbar 
