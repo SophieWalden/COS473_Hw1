@@ -434,8 +434,10 @@ def main():
 
     print(colored(f'Average Total Error: {total_error / (2*NUM_BATTLES):.4f}', "green"))
 
-def heuristic_faceoff(heuristic1, heuristic2):
-     # Number of battles to simulate.
+
+def test_units(unit1, unit2):
+
+    # Number of battles to simulate.
     NUM_BATTLES = 1000
     finalhealth1 = []
     finalhealth2 = []
@@ -447,27 +449,23 @@ def heuristic_faceoff(heuristic1, heuristic2):
 
     ################################################
     # Use these to configure team composition
-
-    team1_keys = {}
-    team2_keys = {}
+    team1_tier1 = 0
+    team1_tier2 = 0
+    team1_tier3 = 0
+    team1_keys = {unit1: 1}
+    
+    team2_tier1 = 0
+    team2_tier2 = 0
+    team2_tier3 = 0
+    team2_keys = {unit2: 1}
 
     TEAM1 = "red"
     TEAM2 = "blue"
     #################################################
     
-    total_error_heuristic_1 = 0
-    total_error_heuristic_2 = 0
-    heuristic_score = [0, 0]
-    win1, win2, ties = 0, 0, 0
+    total_error = 0
 
     for i in range(NUM_BATTLES):
-        team1_tier1 = random.randint(1, 10)
-        team1_tier2 = random.randint(0, 10)
-        team1_tier3 = random.randint(0, 10)
-        team2_tier1 = random.randint(1, 10)
-        team2_tier2 = random.randint(0, 10)
-        team2_tier3 = random.randint(0, 10)
-
         team1 = gen_rand_team(TEAM1,
                               team1_tier1,
                               team1_tier2,
@@ -479,117 +477,47 @@ def heuristic_faceoff(heuristic1, heuristic2):
                               team2_tier3,
                               team2_keys)
 
-        team1_health = total_health_of_team(team1)
-        team2_health = total_health_of_team(team2)
-
-
-        p1, p2 = heuristic1(team1, team2)
-        p3, p4 = heuristic2(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=False) # Only show one battle every 100 battles
-
-        fh1 = result1/team1_health
-        fh2 = result2/team2_health
-
-        heuristic_1_error = abs(fh1-p1) + abs(fh2-p2)
-        heuristic_2_error = abs(fh1-p3) + abs(fh2-p4)
-
-        total_error_heuristic_1 += heuristic_1_error
-        total_error_heuristic_2 += heuristic_2_error
+        result1, result2 = battle(team1, team2, (0, 0)) 
         
-        if heuristic_1_error < heuristic_2_error:
-            win1 += 1
-        elif heuristic_2_error < heuristic_1_error:
-            win2 += 1
-        else:
-            ties += 1
-        
+        if result1 > result2:
+            winner.append(1)
+        elif result2 > result1:
+            winner.append(2)
 
 
-    print(colored(f'Heuristic 1 wins: {win1:<5}', "red"))
-    print(colored(f'Heuristic 2 wins: {win2:<5}', "blue"))
-    print(colored(f'Ties: {ties:<5}', "cyan"))
-    print()
+    win1 = winner.count(1)
+    win2 = winner.count(2)
+    print(colored(f'Unit {unit1} wins: {win1:<5}', "green"))
+    print(colored(f'Unit {unit2} wins: {win2:<5}', "green"))
 
-    print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
-    print(colored(f'Heuristic 2 Average Total Error: {total_error_heuristic_2 / (2*NUM_BATTLES):.4f}', "green"))
+    return win1, win2
 
-def test_winrate(heuristic):
-     # Number of battles to simulate.
-    NUM_BATTLES = 10000
-    finalhealth1 = []
-    finalhealth2 = []
-    error1 = []
-    error2 = []
-    preds1 = []
-    preds2 = []
-    winner = []
+from collections import defaultdict
 
-    ################################################
-    # Use these to configure team composition
+n_classes = 15
+unit_winrates = defaultdict(lambda: defaultdict(lambda: 0))
 
-    team1_keys = {}
-    team2_keys = {}
+seenMatchups = set([])
+for j in range(n_classes):
+    for i in range(n_classes):
+        if tuple(sorted((i, j))) not in seenMatchups:
+            seenMatchups.add(tuple(sorted((i, j))))
+            win1, win2 = test_units(i, j)
+            winrate = round((win1/(win1+win2))*100, 4)
+            unit_winrates[j][i] = 100 - winrate
+            unit_winrates[i][j] = 100 - (100 - winrate)
+  
 
-    TEAM1 = "red"
-    TEAM2 = "blue"
-    #################################################
-    
-    total_error_heuristic_1 = 0
-    total_error_heuristic_2 = 0
-    heuristic_score = [0, 0]
-    wins = 0
-    score_off, count = 0, 0
+print()
 
-    for i in range(NUM_BATTLES):
-        team1_tier1 = random.randint(1, 10)
-        team1_tier2 = random.randint(0, 10)
-        team1_tier3 = random.randint(0, 10)
-        team2_tier1 = random.randint(1, 10)
-        team2_tier2 = random.randint(0, 10)
-        team2_tier3 = random.randint(0, 10)
+output = "      "
+for key, _ in unit_winrates.items():
+    output += f"{key:<5}"
+print(colored(output, "grey", attrs=["underline"]))
 
-        team1 = gen_rand_team(TEAM1,
-                              team1_tier1,
-                              team1_tier2,
-                              team1_tier3,
-                              team1_keys)
-        team2 = gen_rand_team(TEAM2,
-                              team2_tier1,
-                              team2_tier2,
-                              team2_tier3,
-                              team2_keys)
-
-        team1_health = total_health_of_team(team1)
-        team2_health = total_health_of_team(team2)
+for key, value in unit_winrates.items():
+    print(*([colored(f"{f'{key}:':<3}  ", "grey")] + [f"{int(item):<4}" for item in value.values()]))
 
 
-        p1, p2 = heuristic(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=False) # Only show one battle every 100 battles
-
-        fh1 = result1/team1_health
-        fh2 = result2/team2_health
-
-        heuristic_1_error = abs(fh1-p1) + abs(fh2-p2)
-
-        total_error_heuristic_1 += heuristic_1_error
-        
-        if (p1 == 0 and result1 == 0) or (p2 == 0 and result2 == 0):
-            wins += 1
-            score_off += abs(fh1 - p1) + abs(fh2 - p2)
-            count += 1
-
-        
-
-
-    print(colored(f'Heuristic Winrate: {wins / NUM_BATTLES:.2%}', "red"))
-    print(colored(f'Heuristic Loss Off: {score_off / count:.2f}', "blue"))
-    print()
-
-    print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
-
-
-import heuristics
-
-test_winrate(heuristics.matchup_dependent_heuristic)
-#main()
-#heuristic_faceoff(heuristics.zero_guesser, heuristics.end_health_calculating_heuristic)
+for key, value in unit_winrates.items():
+    print(f"{key}: {dict(value)}" + ',')
