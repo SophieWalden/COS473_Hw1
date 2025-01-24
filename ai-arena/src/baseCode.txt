@@ -1,0 +1,45 @@
+# Your prediction algorithm should be in these three functions.
+# If you add more functions please keep them within the bounds of
+# these comment blocks.
+
+# WARNING: You may NOT call the combat() or battle() functions in
+# any of your fitness evaluations. Or recreate them.
+# The assumption is, running
+# a full battle between two teams is expensive time-wise. Your job
+# is to give each side's AI an estimate of the cost (in terms of
+# health) of the battle, with the idea that other parts of the AI
+# (not simulated here) would decide to initiate combat based on
+# your fitness function's prediction.
+
+# WARNING 2: The actual team and actor objects are being passed
+# into these functions for the sake of simplicity. Evaluate them.
+# DO NOT change the teams or the stats of the units.
+
+# The fitness_actor functionshould return the fitness of a single unit.
+# This will form
+# the basis of evaluating an entire team. Fitness values can be
+# multivariate; however, remember the idea is to distill a unit's
+# stats down to something simpler. What the return of this function
+# (and the fitness_team function) represents and how it is used
+# is totally up to you.
+def fitness_actor(actr):
+    return sum(actr.data)
+
+# This should return the fitness of an entire team. Similarly to them
+# unit fitness function, you are free to return one or more values.
+# And use those values in any way you choose.
+def fitness_team(team):
+    return sum(fitness_actor(actor) for actor in team)
+
+# This function should return an estimate of the final health
+# percentage of both teams as a tuple. For example, a value of 0.0
+# means that, if a battle were to occur between these two teams,
+# the team with 0.0 would end the battle with 0 health across all
+# units. Whereas, 1.0 means a team does not lose any health.
+#
+# NOTE: The two health predictions DO NOT have to sum to one. This
+# is not a probability distribution but an evaluation of the cost
+# of battle between two teams.
+def fitness_outcome(team1, team2):
+    s1, s2 = fitness_team(team1), fitness_team(team2)
+    return s1/(s1+s2), s2/(s1+s2)

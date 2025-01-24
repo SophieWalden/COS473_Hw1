@@ -1,6 +1,5 @@
 import random
 import math
-from termcolor import colored
 from collections import defaultdict
 
 """
@@ -14,7 +13,7 @@ Also associated names with every single kind of unit
 # Setting to True will cause the simulator to
 # throw out a lot of additional text. Not all
 # of it helpful.
-DEBUG = True
+DEBUG = False
 
 
 # Each sublist represents a unit type's stats
@@ -314,129 +313,9 @@ def battle(teamA, teamB, predictions, debug=False):
     
     return (total_health_of_team(teamA), total_health_of_team(teamB))
 
-# #####################################################################
-# #####################################################################
-# #####################################################################
-# Your prediction algorithm should be in these three functions.
-# If you add more functions please keep them within the bounds of
-# these comment blocks.
-
-# WARNING: You may NOT call the combat() or battle() functions in
-# any of your fitness evaluations. Or recreate them.
-# The assumption is, running
-# a full battle between two teams is expensive time-wise. Your job
-# is to give each side's AI an estimate of the cost (in terms of
-# health) of the battle, with the idea that other parts of the AI
-# (not simulated here) would decide to initiate combat based on
-# your fitness function's prediction.
-
-# WARNING 2: The actual team and actor objects are being passed
-# into these functions for the sake of simplicity. Evaluate them.
-# DO NOT change the teams or the stats of the units.
-
-# The fitness_actor functionshould return the fitness of a single unit.
-# This will form
-# the basis of evaluating an entire team. Fitness values can be
-# multivariate; however, remember the idea is to distill a unit's
-# stats down to something simpler. What the return of this function
-# (and the fitness_team function) represents and how it is used
-# is totally up to you.
-def fitness_actor(actr):
-    return sum(actr.data)
-
-# This should return the fitness of an entire team. Similarly to them
-# unit fitness function, you are free to return one or more values.
-# And use those values in any way you choose.
-def fitness_team(team):
-    return sum(fitness_actor(actor) for actor in team.actors)
-
-# This function should return an estimate of the final health
-# percentage of both teams as a tuple. For example, a value of 0.0
-# means that, if a battle were to occur between these two teams,
-# the team with 0.0 would end the battle with 0 health across all
-# units. Whereas, 1.0 means a team does not lose any health.
-#
-# NOTE: The two health predictions DO NOT have to sum to one. This
-# is not a probability distribution but an evaluation of the cost
-# of battle between two teams.
-def fitness_outcome(team1, team2):
-    s1, s2 = fitness_team(team1)**25, fitness_team(team2)**25
-    return s1/(s1+s2), s2/(s1+s2)
-
-# #####################################################################
-# #####################################################################
-# #####################################################################
-def main():
-
-    # Number of battles to simulate.
-    NUM_BATTLES = 500
-    finalhealth1 = []
-    finalhealth2 = []
-    error1 = []
-    error2 = []
-    preds1 = []
-    preds2 = []
-    winner = []
-
-    ################################################
-    # Use these to configure team composition
-    team1_tier1 = 0
-    team1_tier2 = 0
-    team1_tier3 = 0
-    team1_keys = {8: 70}
-    
-    team2_tier1 = 0
-    team2_tier2 = 0
-    team2_tier3 = 0
-    team2_keys = {12: 1}
-
-    TEAM1 = "red"
-    TEAM2 = "blue"
-    #################################################
-    
-    total_error = 0
-
-    for i in range(NUM_BATTLES):
-        team1 = gen_rand_team(TEAM1,
-                              team1_tier1,
-                              team1_tier2,
-                              team1_tier3,
-                              team1_keys)
-        team2 = gen_rand_team(TEAM2,
-                              team2_tier1,
-                              team2_tier2,
-                              team2_tier3,
-                              team2_keys)
-
-        team1_health = total_health_of_team(team1)
-        team2_health = total_health_of_team(team2)
-
-
-        p1, p2 = fitness_outcome(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=False) # Only show one battle every 100 battles
-
-        fh1 = result1/team1_health
-        fh2 = result2/team2_health
-        total_error += abs(fh1-p1) + abs(fh2-p2)
-        
-        if result1 > result2:
-            winner.append(1)
-        elif result2 > result1:
-            winner.append(2)
-        else:
-            winner.append(0)
-            print("ERROR: TIE")
-
-    win1 = winner.count(1)
-    win2 = winner.count(2)
-    print(colored(f'Team {TEAM1} wins: {win1:<5}', get_team_color(TEAM1)))
-    print(colored(f'Team {TEAM2} wins: {win2:<5}', get_team_color(TEAM2)))
-
-    print(colored(f'Average Total Error: {total_error / (2*NUM_BATTLES):.4f}', "green"))
-
 def heuristic_faceoff(heuristic1, heuristic2):
      # Number of battles to simulate.
-    NUM_BATTLES = 1000
+    NUM_BATTLES = 100
     finalhealth1 = []
     finalhealth2 = []
     error1 = []
@@ -459,6 +338,7 @@ def heuristic_faceoff(heuristic1, heuristic2):
     total_error_heuristic_2 = 0
     heuristic_score = [0, 0]
     win1, win2, ties = 0, 0, 0
+    
 
     for i in range(NUM_BATTLES):
         team1_tier1 = random.randint(1, 10)
@@ -484,8 +364,8 @@ def heuristic_faceoff(heuristic1, heuristic2):
 
 
         p1, p2 = heuristic1(team1, team2)
-        p3, p4 = heuristic2(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=False) # Only show one battle every 100 battles
+        p3, p4 = heuristic2(team1.actors, team2.actors)
+        result1, result2 = battle(team1, team2, (p1, p2), False) 
 
         fh1 = result1/team1_health
         fh2 = result2/team2_health
@@ -504,129 +384,4 @@ def heuristic_faceoff(heuristic1, heuristic2):
             ties += 1
         
 
-    print("{",f"'playerOneWins': {win1}, 'playerTwoWins': {win2}, 'ties': {ties}, 'playerOneError': {total_error_heuristic_1 / (2*NUM_BATTLES)}, 'playerTwoError': {total_error_heuristic_2 / (2*NUM_BATTLES)}","}")
-
-    print(colored(f'Heuristic 1 wins: {win1:<5}', "red"))
-    print(colored(f'Heuristic 2 wins: {win2:<5}', "blue"))
-    print(colored(f'Ties: {ties:<5}', "cyan"))
-    print()
-
-    print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
-    print(colored(f'Heuristic 2 Average Total Error: {total_error_heuristic_2 / (2*NUM_BATTLES):.4f}', "green"))
-
-def test_winrate(heuristic):
-     # Number of battles to simulate.
-    NUM_BATTLES = 1000
-    finalhealth1 = []
-    finalhealth2 = []
-    error1 = []
-    error2 = []
-    preds1 = []
-    preds2 = []
-    winner = []
-
-    ################################################
-    # Use these to configure team composition
-
-    team1_keys = {}
-    team2_keys = {}
-
-    TEAM1 = "red"
-    TEAM2 = "blue"
-    #################################################
-    
-    total_error_heuristic_1 = 0
-    total_error_heuristic_2 = 0
-    heuristic_score = [0, 0]
-    wins = 0
-    score_off, count = 0, 0
-
-    battles = []
-    seed = 243892 # RANDOM SEED TO AFFECT WHAT THE BATTLES ARE
-    for i in range(NUM_BATTLES):
-        temp_battle = []
-        for _ in range(2):
-            units = {}
-
-            for j in range(15):
-                units[j] = (seed + (i * j)) % 4
-
-            if units[0] == 0: units[0] += 1
-
-            temp_battle.append(units)
-
-        battles.append(temp_battle)
-        seed = seed ** 2 % 243892
-    
-
-    
-    for i in range(NUM_BATTLES):
-
-        team1 = gen_rand_team(TEAM1,
-                              0,
-                              0,
-                              0,
-                              battles[i][0])
-        team2 = gen_rand_team(TEAM2,
-                              0,
-                              0,
-                              0,
-                              battles[i][1])
-
-        team1_health = total_health_of_team(team1)
-        team2_health = total_health_of_team(team2)
-
-
-        p1, p2 = heuristic(team1, team2)
-        result1, result2 = battle(team1, team2, (p1, p2), debug=False) # Only show one battle every 100 battles
-
-        fh1 = result1/team1_health
-        fh2 = result2/team2_health
-
-        heuristic_1_error = abs(fh1-p1) + abs(fh2-p2)
-
-        total_error_heuristic_1 += heuristic_1_error
-        
-        if (p1 == 0 and result1 == 0) or (p2 == 0 and result2 == 0):
-            wins += 1
-            score_off += abs(fh1 - p1) + abs(fh2 - p2)
-            count += 1
-
-        
-
-
-    print(colored(f'Heuristic Winrate: {wins / NUM_BATTLES:.2%}', "red"))
-    print(colored(f'Heuristic Loss Off: {score_off / (1 if not count else count):.2f}', "blue"))
-    print()
-
-    print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
-    
-    return total_error_heuristic_1 / (2*NUM_BATTLES)
-
-import heuristics
-
-#main()
-heuristic_faceoff(heuristics.zero_guesser, heuristics.matchup_dependent_heuristic)
-#test_winrate(heuristics.matchup_dependent_heuristic)
-
-# Testing for best heuristic operation
-# lowest_heuristic = []
-# lowest_loss = math.inf
-# operators = ["+","*","**"]
-# for i in range(1000):
-
-#     heuristic = []
-#     for _ in range(3):
-#         operator = random.choice(operators)
-
-#         if operator in "+*": heuristic.append([random.randint(1,1000000000000)/100, operator])
-#         elif operator == "**": heuristic.append([random.randint(1, 150)/100, operator])
-
-#     loss = test_winrate(heuristics.matchup_dependent_heuristic, heuristic)
-
-#     if loss < lowest_loss:
-#         lowest_loss = loss
-#         lowest_heuristic = heuristic
-
-#     print(f"ROUND {i} Lowest Loss {lowest_loss} Heuristic {lowest_heuristic}")
-
+    print("{",f'"playerOneWins": {win1}, "playerTwoWins": {win2}, "ties": {ties}, "playerOneError": {total_error_heuristic_1 / (2*NUM_BATTLES)}, "playerTwoError": {total_error_heuristic_2 / (2*NUM_BATTLES)}',"}")

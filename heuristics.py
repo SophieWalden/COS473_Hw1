@@ -153,7 +153,6 @@ Using this we can create rankings of total winning percentage points out of 1400
 
 Interestingly while 11 does not beat 12 in terms of total winrate it still beats 12 in a one to one matchup
 This values were tested in 1 to 1 combat, with many to many combat the values get pushed to the extremes even more
-We can use this as a base for a new 
 
 We can use this matchup data above and use the rankings like piecewise tables from chess heuristics
 What piecewise tables do in chess is they are quick lookup tables that tell you what the estimated value of a piece is
@@ -177,10 +176,30 @@ I think we should generate 1000 consistently same battles that have differing le
 There's still slight variabiltiy in how the matches play out but hopefully it will face the same 1000 matchups everytime
 
 Somehow doing that brought my win guessrate down to 51% and the heuristic off to 0.35
-I think this is due to really large team size and more varied units?
+I think this is due to really large team size and more varied units? Does it just become a coinflip at some point?
 
 Okay, if we get it to work on these varied teams we should be able to apply it back to small teams aswell
 So I'm hoping to get this up to ~60% as a start
+
+At this point I'm going to assign "modifier strengths" to each three of our values to regulate them.
+These will be low decimal values (>1.0) that the value is the exponent of that that we can use to slow the multiplying and apply at different strengths
+
+To map this out I opened up desmos and started graphing out some of the potential values based on realistic outputs I'e seen from our values
+For instance we can put 1.01^(len(actors)) as a good modifier since it shows that having +10 is only about a 50% increase in strength to combat having 40 Tier 1 fighters vs 1 Tier 3 wraith situation
+I'm messing around with the values but still getting a ton of variability. I'm going to implement a way to pass in strengths for the values and mass try to see what provides good results
+I'm going to run 1000 heuristics all at 1000 rounds each and choose the best one while I work on creating a visual format for watching these fights for better observations
+After 1 million battles ran, the current best heuristics seem to be [[536501350.31, '+'], [9002206015.69, '*'], [4133157533.95, '*']]. This means it thought matchup and length were more important while units themselves didnt need to be multiplied
+... and it infact made me worse against random_guesser, going back to 50-50% odds instead of 67-33 odds. Well atleast that example was explored
+wait I accidentally removed a multiplcation symbol in my end evaluator ... another 1 million simulations to try I guess
+
+basically what was happening was that for those a million it was evaluating strength purely based off of the length
+I am still getting roughly 50% guessrate on these battles which is worrying though, maybe higher actor count battles are truly random
+
+Finally we get [[4543695934.35, '+'], [1.02, '**'], [0.63, '**']] which shows that length needs to be tuned down, matchups a little up and strength
+... and its still not useful. I think theres something wrong with my test_winrate its still only producing 50% with the new seeded battles
+
+Also going back to testing why certain matchups are so imbalanced. Since wraith has high evasion against low acc on tier 2 golem the golem only can hit 1.4% of turns and even then the wraith has armor
+
 """
 
 import random
@@ -295,30 +314,47 @@ def matchup_dependent_heuristic(team1, team2):
         return val / (len(team.actors) * len(opp.actors))
     
     def fitness_outcome(team1, team2):
+        # Call functions to detemine team strength, matchup, and size
         team1_strength, team2_strength = fitness_team(team1), fitness_team(team2)
         team1_matchup_strength, team2_matchup_strength = get_matchup_strength(team1, team2), get_matchup_strength(team2, team1)
+        team1_size, team2_size = len(team1.actors), len(team2.actors)
 
-        team1_strength *= team1_matchup_strength * len(team1.actors)
-        team2_strength *= team2_matchup_strength * len(team2.actors)
-        
 
-        outputs = [team1_strength/(team1_strength+team2_strength), team2_strength/(team1_strength+team2_strength)]
+        # Equations in how to factor each of these values
+        team_values = [[team1_strength, team1_matchup_strength, team1_size], [team2_strength, team2_matchup_strength, team2_size]]
+
+        value_strengths = [[1, '*'], [1, '*'], [1.01, '**']]
+
+        # Totalling the Values
+        total_team_strengths = [1.0, 1.0]
+        for i in range(2):
+            for value, strength in zip(team_values[i], value_strengths):
+                equation = "".join(map(str, strength + [value]))
+                
+                try: 
+                    result = eval(equation)
+                except Exception:
+                    result = value
+
+                total_team_strengths[i] *= result
         
-        
+        # Calculating likely health left due to low actor quality
         health = [0, 0]
+        health_remaining = [0, 0]
         for actr in team1.actors:
             health[0] += 6 - unit_end_health(actr) * 2
         for actr in team2.actors:
             health[1] += 6 - unit_end_health(actr) * 2
 
-        if team1_strength > team2_strength: 
-            team2_strength = 0
-            outputs[0] = health[0]/sum(health)
+
+
+        if total_team_strengths[0] > total_team_strengths[1]: 
+            health_remaining[0] = health[0]/sum(health)
         else: 
-            team1_strength = 0
-            outputs[1] = health[1]/sum(health)
-        
-        return outputs[0] if team1_strength else team1_strength, outputs[1] if team2_strength else team2_strength
+            health_remaining[1] = health[1]/sum(health)
+    
+
+        return health_remaining[0], health_remaining[1] 
 
 
     return fitness_outcome(team1, team2)

@@ -1,18 +1,28 @@
 {
   "name": "ai-arena",
-  "private": true,
+  "private": false,
+  "homepage": "https://sophiewalden.github.io/COS498_AI_Arena/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@codemirror/lang-python": "^6.1.7",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@uiw/react-codemirror": "^4.23.7",
+    "brython": "^3.13.0",
+    "gh-pages": "^6.3.0",
     "react": "^18.3.1",
+    "react-circular-progressbar": "^2.1.0",
     "react-dom": "^18.3.1",
-    "react-py": "^1.11.2"
+    "react-py": "^1.11.2",
+    "skulpt": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

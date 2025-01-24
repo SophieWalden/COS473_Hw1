@@ -1,0 +1,67 @@
+def main():
+
+    # Number of battles to simulate.
+    NUM_BATTLES = 100
+    finalhealth1 = []
+    finalhealth2 = []
+    error1 = []
+    error2 = []
+    preds1 = []
+    preds2 = []
+    winner = []
+
+    ################################################
+    # Use these to configure team composition
+    team1_tier0 = 10
+    team1_tier1 = 10
+    team1_tier2 = 10
+    team1_keys = {}
+    
+    team2_tier0 = 10
+    team2_tier1 = 10
+    team2_tier2 = 10
+    team2_keys = {}
+    #################################################
+    
+    for i in range(NUM_BATTLES):
+        team1 = gen_rand_team("1",
+                              team1_tier0,
+                              team1_tier1,
+                              team1_tier2,
+                              team1_keys)
+        team2 = gen_rand_team("2",
+                              team2_tier0,
+                              team2_tier1,
+                              team2_tier2,
+                              team2_keys)
+
+        team1_health = total_health_of_team(team1)
+        team2_health = total_health_of_team(team2)
+
+        print_team_composition("1", team1)
+        print_team_composition("2", team2)
+
+        p1, p2 = fitness_outcome(team1, team2)
+        preds1.append(p1)
+        preds2.append(p2)
+        result1, result2 = battle(team1, team2)
+        fh1 = result1/team1_health
+        fh2 = result2/team2_health
+        finalhealth1.append(fh1)
+        finalhealth2.append(fh2)
+        error1.append(abs(fh1-p1))
+        error2.append(abs(fh2-p2))
+        if result1 > result2:
+            winner.append(1)
+        elif result2 > result1:
+            winner.append(2)
+        else:
+            winner.append(0)
+            print("ERROR: TIE")
+
+    win1 = winner.count(1)
+    win2 = winner.count(2)
+    print('{',f'"wins": {win1}, "win2": {win2}, "error1": {sum(error1)/NUM_BATTLES}, "error2": {sum(error2)/NUM_BATTLES}','}',sep="")
+
+
+main()

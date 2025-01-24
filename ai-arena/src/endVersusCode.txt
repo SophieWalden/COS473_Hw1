@@ -1,0 +1,4 @@
+def zero_guesser(team1, team2):
+    return 0,0
+
+heuristic_faceoff(zero_guesser, fitness_outcome)

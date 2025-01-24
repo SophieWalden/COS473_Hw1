@@ -1,0 +1,220 @@
+import random
+import math
+
+# Setting to True will cause the simulator to
+# throw out a lot of additional text. Not all
+# of it helpful.
+DEBUG = False
+
+
+# Each sublist represents a unit type's stats
+# The values are (by index):
+# - 0: Damage Value
+# - 1: Accuracy Value (To-Hit)
+# - 2: Evasion (dodge)
+# - 3: Armor (damage reduction)
+# - 4: Health
+unit_templates = [
+    [20, 10, 10, 10, 10],
+    [10, 20, 10, 10, 10],
+    [10, 10, 20, 10, 10],
+    [10, 10, 10, 20, 10],
+    [10, 10, 10, 10, 20],
+    [30, 20, 5, 10, 10],
+    [10, 30, 20, 5, 10],
+    [10, 10, 30, 20, 5],
+    [5, 10, 10, 30, 20],
+    [20, 5, 10, 10, 30],
+    [40, 5, 10, 20, 30],
+    [30, 40, 5, 10, 20],
+    [20, 30, 40, 5, 10],
+    [10, 20, 30, 40, 5],
+    [5, 10, 20, 30, 40],
+    ]
+
+# Index constants for the above unit_templates
+DAMAGE = 0
+ACCURACY = 1
+EVASION = 2
+ARMOR = 3
+HEALTH = 4
+
+# Print function controlled by the DEBUG constants
+def output(msg):
+    if DEBUG:
+        print(msg)
+
+# Basic unit of the game
+class Actor:
+    def __init__(self,
+                 ID,
+                 data,
+                 team_name,
+                 spot):
+        self.ID = ID            # Which unit_templates
+        self.data = data        # Unit stats (list)
+        self.team_name = team_name  # name of the team
+        self.spot = spot            # spot in the team
+
+        # for i in range(len(self.data)):
+        #     var = self.data[i]//5
+        #     adjustment = random.randint(-var, var)
+        #     self.data[i] += adjustment
+
+    def make_accuracy(self):
+        return (random.randint(0, self.get_accuracy()) + random.randint(0, self.get_accuracy()) + random.randint(0, self.get_evasion())) // 3
+    
+    def make_evasion(self):
+        return (random.randint(0, self.get_evasion()) + random.randint(0, self.get_evasion()) + random.randint(0, self.get_accuracy())) // 3
+
+    def make_damage(self):
+        total_dmg = 0
+        cur_dmg = random.randint(0,self.get_damage())
+        total_dmg += cur_dmg
+        while cur_dmg == self.get_damage():
+            cur_dmg = random.randint(0,self.get_damage())
+            if cur_dmg == 0:
+                total_dmg = 0
+            else:
+                total_dmg += cur_dmg
+        return total_dmg
+
+    def make_armor(self):
+        total_arm = 0
+        cur_arm = random.randint(0,self.get_armor())
+        total_arm += cur_arm
+        while total_arm == self.get_armor():
+            cur_arm = random.randint(0,self.get_armor())
+            total_arm += cur_arm
+        return total_arm
+
+    def make_defense(self, dmg):
+        dmg -= self.make_armor()
+        if dmg > 0:
+            self.data[HEALTH] -= dmg
+            if self.get_health() <= 0:
+                self.data[HEALTH] = 0
+            return dmg
+        return 0
+    def get_ID(self):
+        return self.ID
+    def get_health(self):
+        return self.data[HEALTH]
+    def get_damage(self):
+        return self.data[DAMAGE]
+    def get_accuracy(self):
+        return self.data[ACCURACY]
+    def get_evasion(self):
+        return self.data[EVASION]
+    def get_armor(self):
+        return self.data[ARMOR]
+    def get_team_name(self):
+        return self.team_name
+    def get_spot(self):
+        return self.spot
+
+    def is_alive(self):
+        return self.get_health() > 0
+
+# Generates a randomized team using the
+# various tier composition values.
+# Each tier corresponds to five unit_templates
+# the keys list can be used to specify types
+# exactly.
+def gen_rand_team(team_name,
+                  tier0=0,
+                  tier1=0,
+                  tier2=0,
+                  keys={}):
+    team = []
+    for key, amt in keys.items():
+        for i in range(amt):
+            stats = unit_templates[key][:]
+            actor = Actor(key, stats, team_name, i)
+            team.append(actor)
+    for i in range(tier0):
+        key = random.randrange(0,5)
+        stats = unit_templates[key][:]
+        actor = Actor(key, stats, team_name, i)
+        team.append(actor)
+    for i in range(tier1):
+        key = random.randrange(0,5)+5
+        stats = unit_templates[key][:]
+        actor = Actor(key, stats, team_name, i)
+        team.append(actor)
+    for i in range(tier2):
+        key = random.randrange(0,5)+10
+        stats = unit_templates[key][:]
+        actor = Actor(key, stats, team_name, i)
+        team.append(actor)
+    return team
+
+def total_health_of_team(team):
+    health = 0
+    for actor in team:
+        health += actor.get_health()
+    return health
+
+def print_team_composition(team_name, team):
+    output(f"Team {team_name}")
+    types = {}
+    for actor in team:
+        if actor.get_ID() not in types:
+            types[actor.get_ID()] = 1
+        else:
+            types[actor.get_ID()] += 1
+    for i,amt in types.items():
+        output(f"Type {i}: {amt}")
+    output("")
+
+# Runs a combat round between two units.
+# Each unit has a chance to attack and defend
+# unless the first disables the second before
+# it has a chance to go.
+def combat(first, second):
+
+    att1 = first.make_accuracy()
+    def2 = second.make_evasion()
+    if att1 > def2:
+        dmg1 = first.make_damage()
+        dmg1 = second.make_defense(dmg1)
+        output(f"{first.get_team_name()}:{first.get_spot()} damaged {second.get_team_name()}:{second.get_spot()} for {dmg1}.")
+
+    if second.is_alive():
+        att2 = second.make_accuracy()
+        def1 = first.make_evasion()
+        if att2 > def1:
+            dmg2 = second.make_damage()
+            dmg2 = first.make_defense(dmg2)
+            output(f"{second.get_team_name()}:{second.get_spot()} damaged {first.get_team_name()}:{first.get_spot()} for {dmg2}.")
+
+# Runs an entire battle between two teams
+# Battle ends when one team loses all its
+# units.
+def battle(teamA, teamB):
+
+    round = 1
+    while len(teamA) > 0 and len(teamB) > 0:
+        output(f"ROUND {round}")
+        output(f"Team 1: {len(teamA)} - Team 2: {len(teamB)}")
+        aI = random.randrange(len(teamA))
+        bI = random.randrange(len(teamB))
+        actorA = teamA[aI]
+        actorB = teamB[bI]
+
+        if random.random() < 0.5:
+            combat(actorA, actorB)
+        else:
+            combat(actorB, actorA)
+
+        if not actorA.is_alive():
+            output(f"Team 1 - Actor {actorA.get_spot()} died.")
+            teamA.pop(aI)
+        if not actorB.is_alive():
+            output(f"Team 2 - Actor {actorB.get_spot()} died.")
+            teamB.pop(bI)
+
+        round += 1
+
+    if len(teamA) == 0 or len(teamB) == 0:
+        return (total_health_of_team(teamA), total_health_of_team(teamB))
