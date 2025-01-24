@@ -55,7 +55,8 @@
 
 
 .loss-rate-button{
-  border-radius: 0px;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
 }
 
 .versus-button{
@@ -83,9 +84,10 @@
 
 #header-title{
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
   width: 40vw;
+  padding-left: 10vw;
 }
 
 #header-button-holder{
@@ -148,4 +150,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+#header-title h2{
+  font-size: 1.5vw;
+}
+
+#header-title h5{
+  font-size: 0.5vw;
 }

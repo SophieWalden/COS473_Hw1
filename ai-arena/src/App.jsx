@@ -120,12 +120,11 @@ const App = () => {
       <div id="site-header">
         <div id="header-title">
           <h2>Cos 498 AI Arena</h2>
-          <h5>Created by Sophie Walden</h5>
         </div>
         <div id="header-button-holder">
           <button className="versus-button header-button" onClick={() => setTab("versus") || runPython("versus")}>Versus</button>
           <button className="loss-rate-button header-button" onClick={() => setTab("lossRate") || runPython("loss")}>Test Loss Rate</button>
-          <button disabled className="battle-button header-button" onClick={() => setTab("watchBattle") || runPython()}>Watch Battle</button>
+          {/* <button disabled className="battle-button header-button" onClick={() => setTab("watchBattle") || runPython()}>Watch Battle</button> */}
         </div>
       </div>
       <div id="site-content">
