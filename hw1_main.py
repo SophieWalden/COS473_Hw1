@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Setting to True will cause the simulator to
 # throw out a lot of additional text. Not all
 # of it helpful.
-DEBUG = True
+DEBUG = False
 
 
 # Each sublist represents a unit type's stats
@@ -247,27 +247,83 @@ def battle(teamA, teamB):
 # stats down to something simpler. What the return of this function
 # (and the fitness_team function) represents and how it is used
 # is totally up to you.
-def fitness_actor(actr):
-    return sum(actr.data)
 
-# This should return the fitness of an entire team. Similarly to them
-# unit fitness function, you are free to return one or more values.
-# And use those values in any way you choose.
+
+piece_values_attempt2 = [424, 474, 527, 258, 254, 815, 900, 813, 233, 370, 799, 1300, 1302, 1129, 896]
+matchup_stats = {0: {0: 53.3, 1: 48.0, 2: 35.8, 3: 66.8, 4: 65.1, 5: 24.1, 6: 13.0, 7: 13.3, 8: 68.1, 9: 56.3, 10: 22.4, 11: 2.1, 12: 1.8, 13: 3.8, 14: 4.0},
+1: {0: 52.0, 1: 52.4, 2: 51.7, 3: 68.4, 4: 72.7, 5: 18.0, 6: 18.3, 7: 27, 8: 72.7, 9: 57.3, 10: 21.8, 11: 0.5, 12: 1.8, 13: 8.0, 14: 4.2},
+2: {0: 64.2, 1: 48.3, 2: 46.0, 3: 77.6, 4: 80.7, 5: 24.2, 6: 10.8, 7: 23.0, 8: 81.4, 9: 71.9, 10: 36, 11: 0.5, 12: 0.3, 13: 4.2, 14: 4.0},
+3: {0: 33.2, 1: 31.6, 2: 22.5, 3: 49.7, 4: 49.9, 5: 8.5, 6: 5.3, 7: 10.9, 8: 49.5, 9: 38.9, 10: 4.1, 11: 0.6, 12: 0.4, 13: 2.4, 14: 0.4},
+4: {0: 34.9, 1: 27.3, 2: 19.3, 3: 50.1, 4: 50.2, 5: 11.8, 6: 6.2, 7: 7.6, 8: 50.2, 9: 38.6, 10: 4.5, 11: 0.4, 12: 0.5, 13: 2.4, 14: 0.4},
+5: {0: 75.9, 1: 82.0, 2: 75.8, 3: 91.5, 4: 88.2, 5: 51.3, 6: 47.4, 7: 49.9, 8: 94.3, 9: 75.6, 10: 48.2, 11: 12.1, 12: 5.7, 13: 18.7, 14: 50.1},
+6: {0: 87.0, 1: 81.7, 2: 89.2, 3: 94.7, 4: 93.8, 5: 52.6, 6: 48.4, 7: 65.4, 8: 94.1, 9: 88.6, 10: 73.4, 11: 2.0, 12: 5.2, 13: 20.8, 14: 52.0},
+7: {0: 86.7, 1: 73.1, 2: 77.0, 3: 89.9, 4: 92.4, 5: 50.1, 6: 34.6, 7: 51.6, 8: 91.5, 9: 87.1, 10: 67.2, 11: 2.4, 12: 2.1, 13: 13.2, 14: 46.4},
+8: {0: 31.9, 1: 27.3, 2: 18.6, 3: 50.5, 4: 49.8, 5: 5.7, 6: 5.9, 7: 8.5, 8: 48.4, 9: 32.7, 10: 0.7, 11: 0.0, 12: 0.3, 13: 1.2, 14: 0.0},        
+9: {0: 43.7, 1: 42.7, 2: 28.1, 3: 61.1, 4: 61.4, 5: 24.4, 6: 11.4, 7: 12.9, 8: 67.3, 9: 47.7, 10: 8.8, 11: 1.6, 12: 1.2, 13: 3.4, 14: 2.9},
+10: {0: 77.6, 1: 78.2, 2: 64.1, 3: 95.9, 4: 95.5, 5: 51.8, 6: 26.6, 7: 32.8, 8: 99.3, 9: 91.2, 10: 51.6, 11: 18.2, 12: 3.3, 13: 13.5, 14: 51.9},
+11: {0: 97.9, 1: 99.5, 2: 99.5, 3: 99.4, 4: 99.6, 5: 87.9, 6: 98.0, 7: 97.6, 8: 100.0, 9: 98.4, 10: 81.8, 11: 51.1, 12: 57.4, 13: 84.1, 14: 99.0},
+12: {0: 98.2, 1: 98.2, 2: 99.7, 3: 99.6, 4: 99.5, 5: 94.3, 6: 94.8, 7: 97.9, 8: 99.7, 9: 98.8, 10: 96.7, 11: 42.6, 12: 51.4, 13: 84.6, 14: 98.4},
+13: {0: 96.3, 1: 92.0, 2: 95.8, 3: 97.6, 4: 97.6, 5: 81.3, 6: 79.2, 7: 86.8, 8: 98.8, 9: 96.6, 10: 86.5, 11: 15.9, 12: 15.4, 13: 50.9, 14: 89.7},
+14: {0: 96.0, 1: 95.8, 2: 96.0, 3: 99.6, 4: 99.6, 5: 49.9, 6: 48.0, 7: 53.6, 8: 100.0, 9: 97.1, 10: 48.1, 11: 1.0, 12: 1.6, 13: 10.3, 14: 48.9}}
+
+def fitness_actor(actr):
+    return piece_values_attempt2[actr.ID] ** 3
+
 def fitness_team(team):
     return sum(fitness_actor(actor) for actor in team)
 
-# This function should return an estimate of the final health
-# percentage of both teams as a tuple. For example, a value of 0.0
-# means that, if a battle were to occur between these two teams,
-# the team with 0.0 would end the battle with 0 health across all
-# units. Whereas, 1.0 means a team does not lose any health.
-#
-# NOTE: The two health predictions DO NOT have to sum to one. This
-# is not a probability distribution but an evaluation of the cost
-# of battle between two teams.
+
+def get_matchup_strength(team, opp):
+    val = 0
+
+    for actor in team:
+        for opp_actor in opp:
+            val += matchup_stats[actor.ID][opp_actor.ID]
+
+    return val / (len(team) * len(opp))
+
 def fitness_outcome(team1, team2):
-    s1, s2 = fitness_team(team1)**25, fitness_team(team2)**25
-    return s1/(s1+s2), s2/(s1+s2)
+    # Call functions to detemine team strength, matchup, and size
+    team1_strength, team2_strength = fitness_team(team1), fitness_team(team2)
+    team1_matchup_strength, team2_matchup_strength = get_matchup_strength(team1, team2), get_matchup_strength(team2, team1)
+    team1_size, team2_size = len(team1), len(team2)
+
+
+    # Equations in how to factor each of these values
+    team_values = [[team1_strength, team1_matchup_strength, team1_size], [team2_strength, team2_matchup_strength, team2_size]]
+
+    value_strengths = [[1, '*'], [1, '*'], [0.0001, '*']]
+
+    # Totalling the Values
+    total_team_strengths = [1.0, 1.0]
+    for i in range(2):
+        for value, strength in zip(team_values[i], value_strengths):
+            equation = "".join(map(str, strength + [value]))
+            
+            try: 
+                result = eval(equation)
+            except Exception:
+                result = value
+
+            total_team_strengths[i] *= result
+    
+
+
+    unbalanced_rating = (max(total_team_strengths)/min(total_team_strengths)) // 2
+    winner_index = int(total_team_strengths[1] > total_team_strengths[0])
+    
+    # Calculating likely health left due to low actor quality
+    health = [0, 0]
+    health_remaining = [0, 0]
+    for i, actors in enumerate([team1, team2]):
+        for actr in actors:
+            health[i] += (6 - (actr.ID // 5)) * [1, unbalanced_rating][i == winner_index]
+
+
+
+    health_remaining[winner_index] = health[winner_index] / sum(health)
+
+    return health_remaining[0], health_remaining[1] 
 
 # #####################################################################
 # #####################################################################

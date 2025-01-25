@@ -503,9 +503,6 @@ def heuristic_faceoff(heuristic1, heuristic2):
         else:
             ties += 1
         
-
-    print("{",f"'playerOneWins': {win1}, 'playerTwoWins': {win2}, 'ties': {ties}, 'playerOneError': {total_error_heuristic_1 / (2*NUM_BATTLES)}, 'playerTwoError': {total_error_heuristic_2 / (2*NUM_BATTLES)}","}")
-
     print(colored(f'Heuristic 1 wins: {win1:<5}', "red"))
     print(colored(f'Heuristic 2 wins: {win2:<5}', "blue"))
     print(colored(f'Ties: {ties:<5}', "cyan"))
@@ -513,6 +510,8 @@ def heuristic_faceoff(heuristic1, heuristic2):
 
     print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
     print(colored(f'Heuristic 2 Average Total Error: {total_error_heuristic_2 / (2*NUM_BATTLES):.4f}', "green"))
+
+    return win2
 
 def test_winrate(heuristic):
      # Number of battles to simulate.
@@ -541,37 +540,10 @@ def test_winrate(heuristic):
     wins = 0
     score_off, count = 0, 0
 
-    battles = []
-    seed = 243892 # RANDOM SEED TO AFFECT WHAT THE BATTLES ARE
-    for i in range(NUM_BATTLES):
-        temp_battle = []
-        for _ in range(2):
-            units = {}
-
-            for j in range(15):
-                units[j] = (seed + (i * j)) % 4
-
-            if units[0] == 0: units[0] += 1
-
-            temp_battle.append(units)
-
-        battles.append(temp_battle)
-        seed = seed ** 2 % 243892
-    
-
-    
     for i in range(NUM_BATTLES):
 
-        team1 = gen_rand_team(TEAM1,
-                              0,
-                              0,
-                              0,
-                              battles[i][0])
-        team2 = gen_rand_team(TEAM2,
-                              0,
-                              0,
-                              0,
-                              battles[i][1])
+        team1 = gen_rand_team(TEAM1, random.randint(1,10), random.randint(0,10), random.randint(0,10))
+        team2 = gen_rand_team(TEAM2, random.randint(1,10), random.randint(0,10), random.randint(0,10))
 
         team1_health = total_health_of_team(team1)
         team2_health = total_health_of_team(team2)
@@ -607,26 +579,5 @@ import heuristics
 
 #main()
 heuristic_faceoff(heuristics.zero_guesser, heuristics.matchup_dependent_heuristic)
+
 #test_winrate(heuristics.matchup_dependent_heuristic)
-
-# Testing for best heuristic operation
-# lowest_heuristic = []
-# lowest_loss = math.inf
-# operators = ["+","*","**"]
-# for i in range(1000):
-
-#     heuristic = []
-#     for _ in range(3):
-#         operator = random.choice(operators)
-
-#         if operator in "+*": heuristic.append([random.randint(1,1000000000000)/100, operator])
-#         elif operator == "**": heuristic.append([random.randint(1, 150)/100, operator])
-
-#     loss = test_winrate(heuristics.matchup_dependent_heuristic, heuristic)
-
-#     if loss < lowest_loss:
-#         lowest_loss = loss
-#         lowest_heuristic = heuristic
-
-#     print(f"ROUND {i} Lowest Loss {lowest_loss} Heuristic {lowest_heuristic}")
-

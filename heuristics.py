@@ -200,6 +200,40 @@ Finally we get [[4543695934.35, '+'], [1.02, '**'], [0.63, '**']] which shows th
 
 Also going back to testing why certain matchups are so imbalanced. Since wraith has high evasion against low acc on tier 2 golem the golem only can hit 1.4% of turns and even then the wraith has armor
 
+At this point I took a break and made an online code editor for the heuristics:
+Link: https://sophiewalden.github.io/COS498_AI_Arena/
+
+I wanted to have a place where I could easily extend into a watchable fight to see whats happening 
+and give more people the oppurtunity to test their AIs
+
+While I test to see whats wrong with my winrate function, I can look towards guessing better at the end health
+I win 65% of the time against the zero guesser (and it seems mostly in unbalanced scenarios)
+
+We can try to test for how unbalanced the match is by looking at the difference in strength levels?
+If it is more unbalanced then you are unlikely to lose more health
+but if you have more low tier units and its still unbalanced you still lose more health.
+
+It seemed to make it worse if we just had the unbalanced be the higher teams strength divided by the lower
+A couple other notable approaches:
+
+0 health unless strength is double the other teams: 
+ - 50% wins, 35% ties, 15% losses. Much less loss rate but high tie rate. Low loss of 0.12 though
+ - Tested in main simulator, 0.08 avg loss down from 0.2. 
+ - Crazy good since it steals the zero zero guessing strategy if too close and still guesses accurately if not
+ - If we set the winners health to 0.01 for a little less loss its 70% winrate 30% lossrate which is the best we've gotten
+
+Increase the losing teams projected health to get the winner lower:
+ - Probably a sign that I need to change from just dividing out of projected healths
+ - Brings up down to 0.10 loss and 75-80% winrate !!
+ - Simulated against the random guesser and was able to baet it 100 times in a row after 1612 tries
+
+ 
+
+
+Rereading the assignment and it talks about unit combinations. This is mostly not useful in the game I believe
+since each character fights at separate choices. The only scenario is like having one tier 3 fighter
+to eliminate a tier 3 golem so the rest of the tier 1s have a chance or something
+
 """
 
 import random
@@ -299,10 +333,7 @@ def matchup_dependent_heuristic(team1, team2):
 
     def fitness_team(team):
         return sum(fitness_actor(actor) for actor in team.actors)
-    
-    def unit_end_health(actr):
-        tier = actr.ID // 5
-        return tier
+
     
     def get_matchup_strength(team, opp):
         val = 0
@@ -323,7 +354,7 @@ def matchup_dependent_heuristic(team1, team2):
         # Equations in how to factor each of these values
         team_values = [[team1_strength, team1_matchup_strength, team1_size], [team2_strength, team2_matchup_strength, team2_size]]
 
-        value_strengths = [[1, '*'], [1, '*'], [1.01, '**']]
+        value_strengths = [[1, '*'], [1, '*'], [0.0001, '*']]
 
         # Totalling the Values
         total_team_strengths = [1.0, 1.0]
@@ -338,21 +369,24 @@ def matchup_dependent_heuristic(team1, team2):
 
                 total_team_strengths[i] *= result
         
+ 
+
+        unbalanced_rating = (max(total_team_strengths)/min(total_team_strengths)) // 2.1
+        winner_index = int(total_team_strengths[1] > total_team_strengths[0])
+        
         # Calculating likely health left due to low actor quality
         health = [0, 0]
         health_remaining = [0, 0]
-        for actr in team1.actors:
-            health[0] += 6 - unit_end_health(actr) * 2
-        for actr in team2.actors:
-            health[1] += 6 - unit_end_health(actr) * 2
+        for i, actors in enumerate([team1.actors, team2.actors]):
+            for actr in actors:
+                health[i] += (3 - (actr.ID // 5)) * [2, unbalanced_rating][i == winner_index]
 
 
+        health_remaining[winner_index] = health[winner_index] / sum(health)
 
-        if total_team_strengths[0] > total_team_strengths[1]: 
-            health_remaining[0] = health[0]/sum(health)
-        else: 
-            health_remaining[1] = health[1]/sum(health)
-    
+        if unbalanced_rating == 0: 
+            health_remaining = [0,0]
+            health_remaining[winner_index] = 0.01
 
         return health_remaining[0], health_remaining[1] 
 
