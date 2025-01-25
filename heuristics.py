@@ -227,7 +227,7 @@ Increase the losing teams projected health to get the winner lower:
  - Brings up down to 0.10 loss and 75-80% winrate !!
  - Simulated against the random guesser and was able to baet it 100 times in a row after 1612 tries
 
- 
+
 
 
 Rereading the assignment and it talks about unit combinations. This is mostly not useful in the game I believe
@@ -354,7 +354,7 @@ def matchup_dependent_heuristic(team1, team2):
         # Equations in how to factor each of these values
         team_values = [[team1_strength, team1_matchup_strength, team1_size], [team2_strength, team2_matchup_strength, team2_size]]
 
-        value_strengths = [[1, '*'], [1, '*'], [0.0001, '*']]
+        value_strengths = [[1, '*'], [1, '*'], [1, '**']]
 
         # Totalling the Values
         total_team_strengths = [1.0, 1.0]
