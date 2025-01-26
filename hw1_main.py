@@ -267,7 +267,7 @@ matchup_stats = {0: {0: 53.3, 1: 48.0, 2: 35.8, 3: 66.8, 4: 65.1, 5: 24.1, 6: 13
 14: {0: 96.0, 1: 95.8, 2: 96.0, 3: 99.6, 4: 99.6, 5: 49.9, 6: 48.0, 7: 53.6, 8: 100.0, 9: 97.1, 10: 48.1, 11: 1.0, 12: 1.6, 13: 10.3, 14: 48.9}}
 
 def fitness_actor(actr):
-    return piece_values_attempt2[actr.ID] ** 3
+    return piece_values_attempt2[actr.ID] ** 4
 
 def fitness_team(team):
     return sum(fitness_actor(actor) for actor in team)
@@ -282,6 +282,9 @@ def get_matchup_strength(team, opp):
 
     return val / (len(team) * len(opp))
 
+def get_team_strengths(strengthA, strengthB, matchupsA, matchupsB):
+    return [strengthA * matchupsA, strengthB * matchupsB]
+
 def fitness_outcome(team1, team2):
     # Call functions to detemine team strength, matchup, and size
     team1_strength, team2_strength = fitness_team(team1), fitness_team(team2)
@@ -290,40 +293,31 @@ def fitness_outcome(team1, team2):
 
 
     # Equations in how to factor each of these values
-    team_values = [[team1_strength, team1_matchup_strength, team1_size], [team2_strength, team2_matchup_strength, team2_size]]
+    total_team_strengths = get_team_strengths(team1_strength, team2_strength, team1_matchup_strength, team2_matchup_strength)
 
-    value_strengths = [[1, '*'], [1, '*'], [0.0001, '*']]
-
-    # Totalling the Values
-    total_team_strengths = [1.0, 1.0]
-    for i in range(2):
-        for value, strength in zip(team_values[i], value_strengths):
-            equation = "".join(map(str, strength + [value]))
-            
-            try: 
-                result = eval(equation)
-            except Exception:
-                result = value
-
-            total_team_strengths[i] *= result
-    
-
-
-    unbalanced_rating = (max(total_team_strengths)/min(total_team_strengths)) // 2
+    unbalanced_rating = (max(total_team_strengths)/min(total_team_strengths)) // 2.1
     winner_index = int(total_team_strengths[1] > total_team_strengths[0])
     
-    # Calculating likely health left due to low actor quality
-    health = [0, 0]
+
+    # remaining health is calculated by factoring in unit defense and how unbalanced the match was
     health_remaining = [0, 0]
-    for i, actors in enumerate([team1, team2]):
-        for actr in actors:
-            health[i] += (6 - (actr.ID // 5)) * [1, unbalanced_rating][i == winner_index]
+    remaining_health = 0
+    health_left_by_defense = {5: [0, 1], 10: [0.1,0.5], 20: [0.1, 0.7], 30: [0.25, 0.8], 40: [0.5, 0.9]}
+    
+    for i, actor in enumerate(team1):
+        health_range = health_left_by_defense[actor.get_armor()]
+        remaining_health += ((health_range[1]-health_range[0]) * (min(1, unbalanced_rating / 3.0)))+health_range[0]
+    
+    remaining_health = remaining_health / len(team1)
+    health_remaining[winner_index] = remaining_health
 
-
-
-    health_remaining[winner_index] = health[winner_index] / sum(health)
+    if unbalanced_rating == 0: 
+        health_remaining = [0,0]
+        health_remaining[winner_index] = 0.01
 
     return health_remaining[0], health_remaining[1] 
+
+
 
 # #####################################################################
 # #####################################################################
@@ -331,7 +325,7 @@ def fitness_outcome(team1, team2):
 def main():
 
     # Number of battles to simulate.
-    NUM_BATTLES = 100
+    NUM_BATTLES = 1000
     finalhealth1 = []
     finalhealth2 = []
     error1 = []
@@ -340,20 +334,22 @@ def main():
     preds2 = []
     winner = []
 
-    ################################################
-    # Use these to configure team composition
-    team1_tier0 = 10
-    team1_tier1 = 10
-    team1_tier2 = 10
-    team1_keys = {}
-    
-    team2_tier0 = 10
-    team2_tier1 = 10
-    team2_tier2 = 10
-    team2_keys = {}
-    #################################################
+   
     
     for i in range(NUM_BATTLES):
+         ################################################
+        # Use these to configure team composition
+        team1_tier0 = random.randint(1, 10)
+        team1_tier1 = random.randint(0, 10)
+        team1_tier2 = random.randint(0, 10)
+        team1_keys = {}
+        
+        team2_tier0 = random.randint(1, 10)
+        team2_tier1 = random.randint(0, 10)
+        team2_tier2 = random.randint(0, 10)
+        team2_keys = {}
+        #################################################
+
         team1 = gen_rand_team("1",
                               team1_tier0,
                               team1_tier1,

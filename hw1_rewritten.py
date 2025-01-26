@@ -511,7 +511,7 @@ def heuristic_faceoff(heuristic1, heuristic2):
     print(colored(f'Heuristic 1 Average Total Error: {total_error_heuristic_1 / (2*NUM_BATTLES):.4f}', "green"))
     print(colored(f'Heuristic 2 Average Total Error: {total_error_heuristic_2 / (2*NUM_BATTLES):.4f}', "green"))
 
-    return win2
+    return total_error_heuristic_2 / (2*NUM_BATTLES)
 
 def test_winrate(heuristic):
      # Number of battles to simulate.
@@ -578,6 +578,37 @@ def test_winrate(heuristic):
 import heuristics
 
 #main()
-heuristic_faceoff(heuristics.zero_guesser, heuristics.matchup_dependent_heuristic)
+heuristic_faceoff(heuristics.zero_guesser, heuristics.complex_health_heuristic)
 
-#test_winrate(heuristics.matchup_dependent_heuristic)
+#test_winrate(heuristics.complex_health_heuristic)
+
+# Testing for best heuristic operation
+# lowest_heuristic = []
+# lowest_loss = math.inf
+# operators = ["+","*","**"]
+# testing_heuristic = None
+# for i in range(1000):
+
+#     if testing_heuristic == None:
+#         heuristic = []
+#         for _ in range(3):
+#             operator = random.choice(operators)
+
+#             if operator in "+*": heuristic.append([random.randint(1,1000000000000)/100, operator])
+#             elif operator == "**": heuristic.append([random.randint(1, 150)/100, operator])
+#     else:
+#         heuristic = testing_heuristic[:]
+
+#     loss = heuristic_faceoff(heuristics.zero_guesser, heuristics.complex_health_heuristic, heuristic)
+
+#     if loss < lowest_loss and testing_heuristic == None:
+#         testing_heuristic = heuristic
+#     elif loss < lowest_loss * 1.1 and testing_heuristic != None:
+#         lowest_loss = loss
+#         lowest_heuristic = heuristic
+#         testing_heuristic = None
+#     else:
+#         testing_heuristic = None
+        
+
+#     print(f"ROUND {i} Lowest Loss {lowest_loss} Heuristic {lowest_heuristic}")

@@ -227,12 +227,39 @@ Increase the losing teams projected health to get the winner lower:
  - Brings up down to 0.10 loss and 75-80% winrate !!
  - Simulated against the random guesser and was able to baet it 100 times in a row after 1612 tries
 
-
-
-
 Rereading the assignment and it talks about unit combinations. This is mostly not useful in the game I believe
 since each character fights at separate choices. The only scenario is like having one tier 3 fighter
 to eliminate a tier 3 golem so the rest of the tier 1s have a chance or something
+
+I readjusted the strength vs matchup levers and interestingly enough my win percentage went down ~5% but my loss also went down 0.02
+It sucks we are optimizing for loss I think I will favor loss
+
+I think that when the wins turn up is when I'm predicting to take a big loss lead but just slightly better then the 0 guesser
+As always the goal is reducing loss, hopefully down to ~0.05 is my final goal
+
+Different health is going to be left based on which unit it is. For instance units with low health / armor are more likely to veer towards either 0% or 100% health
+Conversely units with high armor / health might have not 100% health they will likely be in the 30-80% range from taking a random hit or two
+Therefore we can create a map based on peoples armor / health stats, but we need to look at which stat is more useful.
+
+Average Armor made (5 armor): 2.9000
+Average Armor made (10 armor): 5.4270
+Average Armor made (20 armor): 10.4790
+Average Armor made (30 armor): 15.0910
+Average Armor made (40 armor): 20.4550
+
+So it seems that it makes roughly 51-55% of the armor stat which makes sense with how critical hits work
+and damage works by an identical function (and even the same amount of actors have the distrubition of attack/armor values)
+
+This means that (average damage - avergae armor of a team is how much damage they will do per round?) not sure
+Basically small increments of damage seem obvious to the 30-40 armor actors so we should write an end health guesser 
+that includes a per piece table based off of their armor stat
+
+In this per piece table we can have a range of values per defense. 
+Each of these ranges depict likely health of an actor with this defense that wins
+The lower end of the range is for a more balanced rating while the higher side was for if the match was unbalanced
+
+Going back to our previous gaols, we seemed to have smashed getting >80% winrate against zero_guesser and below <0.1 avergae loss
+Lets see how well it works on the main simulator again: up to 0.1 error. I swear there was an iteration that averaged 0.08 but I call this a success in all my goals
 
 """
 
@@ -246,11 +273,10 @@ def zero_guesser(team1, team2):
 def one_guesser(team1, team2):
     return 1,1
 
-
+""" A value has been assigned to every ID of actor """
 piecewise_values_attempt1 = [5,7,12, 7, 5,  10, 15,  20, 15, 10, 22.5,  75, 200, 75, 22.5 ]
 
 def basic_class_heuristic(team1, team2):
-    """ A value has been assigned to every ID of actor """
 
     def fitness_actor(actr):
         return piecewise_values_attempt1[actr.ID] 
@@ -272,7 +298,6 @@ def basic_class_heuristic(team1, team2):
     return fitness_outcome(team1, team2)
 
 def end_health_calculating_heuristic(team1, team2):
-    """ A value has been assigned to every ID of actor """ 
 
     def fitness_actor(actr):
         return piecewise_values_attempt1[actr.ID] 
@@ -326,7 +351,6 @@ matchup_stats = {0: {0: 53.3, 1: 48.0, 2: 35.8, 3: 66.8, 4: 65.1, 5: 24.1, 6: 13
 14: {0: 96.0, 1: 95.8, 2: 96.0, 3: 99.6, 4: 99.6, 5: 49.9, 6: 48.0, 7: 53.6, 8: 100.0, 9: 97.1, 10: 48.1, 11: 1.0, 12: 1.6, 13: 10.3, 14: 48.9}}
 
 def matchup_dependent_heuristic(team1, team2):
-    """ A value has been assigned to every ID of actor """
 
     def fitness_actor(actr):
         return piece_values_attempt2[actr.ID] ** 3
@@ -383,6 +407,64 @@ def matchup_dependent_heuristic(team1, team2):
 
 
         health_remaining[winner_index] = health[winner_index] / sum(health)
+
+        if unbalanced_rating == 0: 
+            health_remaining = [0,0]
+            health_remaining[winner_index] = 0.01
+
+        return health_remaining[0], health_remaining[1] 
+
+
+    return fitness_outcome(team1, team2)
+
+
+def complex_health_heuristic(team1, team2):
+    
+
+    def fitness_actor(actr):
+        return piece_values_attempt2[actr.ID] ** 4
+
+    def fitness_team(team):
+        return sum(fitness_actor(actor) for actor in team.actors)
+
+    
+    def get_matchup_strength(team, opp):
+        val = 0
+
+        for actor in team.actors:
+            for opp_actor in opp.actors:
+                val += matchup_stats[actor.ID][opp_actor.ID]
+
+        return val / (len(team.actors) * len(opp.actors))
+    
+    def get_team_strengths(strengthA, strengthB, matchupsA, matchupsB):
+        return [strengthA * matchupsA, strengthB * matchupsB]
+    
+    def fitness_outcome(team1, team2):
+        # Call functions to detemine team strength, matchup, and size
+        team1_strength, team2_strength = fitness_team(team1), fitness_team(team2)
+        team1_matchup_strength, team2_matchup_strength = get_matchup_strength(team1, team2), get_matchup_strength(team2, team1)
+        team1_size, team2_size = len(team1.actors), len(team2.actors)
+
+
+        # Equations in how to factor each of these values
+        total_team_strengths = get_team_strengths(team1_strength, team2_strength, team1_matchup_strength, team2_matchup_strength)
+
+        unbalanced_rating = (max(total_team_strengths)/min(total_team_strengths)) // 2.1
+        winner_index = int(total_team_strengths[1] > total_team_strengths[0])
+        
+
+        # remaining health is calculated by factoring in unit defense and how unbalanced the match was
+        health_remaining = [0, 0]
+        remaining_health = 0
+        health_left_by_defense = {5: [0, 1], 10: [0.1,0.5], 20: [0.1, 0.7], 30: [0.25, 0.8], 40: [0.5, 0.9]}
+        
+        for i, actor in enumerate(team1.actors):
+            health_range = health_left_by_defense[actor.get_armor()]
+            remaining_health += ((health_range[1]-health_range[0]) * (min(1, unbalanced_rating / 3.0)))+health_range[0]
+        
+        remaining_health = remaining_health / len(team1.actors)
+        health_remaining[winner_index] = remaining_health
 
         if unbalanced_rating == 0: 
             health_remaining = [0,0]
