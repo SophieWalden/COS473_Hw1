@@ -258,8 +258,23 @@ In this per piece table we can have a range of values per defense.
 Each of these ranges depict likely health of an actor with this defense that wins
 The lower end of the range is for a more balanced rating while the higher side was for if the match was unbalanced
 
-Going back to our previous gaols, we seemed to have smashed getting >80% winrate against zero_guesser and below <0.1 avergae loss
+Going back to our previous goals, we seemed to have smashed getting >80% winrate against zero_guesser and below <0.1 avergae loss
 Lets see how well it works on the main simulator again: up to 0.1 error. I swear there was an iteration that averaged 0.08 but I call this a success in all my goals
+
+I was thinking more about unit combinations and the role of a tank in these fights. I was thinking that there was a possiblity
+that having a tank might be useful in being able to do small chip damage without directly dying while a sniper/fighter finishes them off
+
+This lets the sniper take less damage while still keeping both units around. 
+I tested this by using multiple tier 1 fighters against n - 1 tier 1 fighters and a tier 2 golem. 
+Tier 2 golems are by far the worst unit here, but they are tanky and could provide support
+but it seems they only won 45% of the matches so having a tank does not seem to be useful
+and unit combinations should not be a factor
+
+
+
+
+Finishing this after Monday's class Zach stated that we shouldn't be dumping 20 hours into this
+and diving into it too far (I might have gone too far)
 
 """
 

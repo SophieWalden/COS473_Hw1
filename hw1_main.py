@@ -1,3 +1,142 @@
+"""
+
+Offical Writeup of Approach:
+A complete (rambly) journal of my heuristics is included in the heuristics.py file
+
+For this I started out by adding in files, hw1_rewritten and heuristics, which act as 
+both additional testing functions and most major versions of my heuristic
+
+The main heuristic that I tested against was one that guessed 0, 0 every single time. 
+This is a good basis since you know one team will die anyways so you have to get
+your loss below the health of the other team
+
+First I looked at just the sum of stats of actors in teams relative to each other
+I normalized it by returning their sum divided by the total of both teams to return two values
+that were between 0-1 that added up to 1. This beat the zero_guesser about 55% of the time
+
+Then I went towards analyzing individual unit strengths. 
+
+NOTE: I assigned unit names and made the tiers 1-3 instead of 0-2. 
+For this writeup it will be 0-2 and written as their ID/Index of unit
+
+I first noticed that tier 1s were about ~1.8 Tier 0s and Tier 2s were ~8.5 Tier 0s
+but when looking at specific units it showed theres more importance on certain higher stats then others
+
+Specifically Unit 12 excelled at taking at lower level units due to its high evasion + accuarcy
+The only other strong units were 11/13 and 15/10 seemed to be lagging far behind
+
+Additionally discovered was that certain drawbacks of tier 1 units were so strong they made them unplayable
+For instance Unit ID 8 was the second tier of armor based unit. It had such a low attack stack
+as one of the only two units with 5 attack that it only won 16% of matchups
+
+At this point I created a matchup table and relative strength dictonary of every single piece
+The matchup table was created by running 100 matches between every unit pairing and showed
+eachs units chance from 0 - 100 in winning a matchup against another unit.
+
+Here are the results:
+      0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   
+0:    53   48   35   66   65   24   13   13   68   56   22   2    1    3    4
+1:    52   52   51   68   72   18   18   26   72   57   21   0    1    8    4
+2:    64   48   46   77   80   24   10   23   81   71   35   0    0    4    4
+3:    33   31   22   49   49   8    5    10   49   38   4    0    0    2    0
+4:    34   27   19   50   50   11   6    7    50   38   4    0    0    2    0
+5:    75   82   75   91   88   51   47   49   94   75   48   12   5    18   50
+6:    87   81   89   94   93   52   48   65   94   88   73   2    5    20   52
+7:    86   73   77   89   92   50   34   51   91   87   67   2    2    13   46
+8:    31   27   18   50   49   5    5    8    48   32   0    0    0    1    0
+9:    43   42   28   61   61   24   11   12   67   47   8    1    1    3    2
+10:   77   78   64   95   95   51   26   32   99   91   51   18   3    13   51
+11:   97   99   99   99   99   87   98   97   100  98   81   51   57   84   99
+12:   98   98   99   99   99   94   94   97   99   98   96   42   51   84   98
+13:   96   92   95   97   97   81   79   86   98   96   86   15   15   50   89
+14:   96   95   96   99   99   49   48   53   100  97   48   1    1    10   48
+
+Additionally here is the total winrates of each unit (exluding self fights, so maximum score 1400)
+
+1: 12 - 1302
+2: 11 - 1300
+3: 13 - 1129
+4: 6 - 900
+5: 14 - 896
+6: 5 - 815
+7: 7 - 813
+8: 10 - 799
+9: 2 - 527
+10: 1 - 474
+11: 0 - 424
+12: 9 - 370
+13: 3 - 258
+14: 4 - 254
+15: 8 - 233
+
+This piece table ideas were based off a heuristic idea created in chess.
+Each piece in chess heuristics is given a function to state its exact value.
+For instance a pawn is 1, knight is 3, rook is 5, and queen is 9. 
+This allows for you to easily sum a sides value of their pieces.
+
+I wanted to create this for the different units. Giving the heuristic the ability
+to easily look at the units and see which ones would contribute the most towards team strength
+
+Doing this got us up to 58% winrate against the zero guesser
+
+My next exploration was around the fact that unit strength is not equal to the amount of health left
+Think about a scenario where we have 40 unit 0s with 1 unit 12 versus 60 unit 0s.
+Judging by the strength of unit 12 its team should win ~66% of the time
+BUT by the time the 12 cleared the other 60s a significant amount of the unit 0s would be dead on the unit 12s side.
+Therefore giving it a final health of 0.1-0.4 while the unit 12 could still be even at fully health.
+
+This is when I created a final health guesser that factored in unit tiers
+This got us to 63% winrate against the zero guesser
+
+Not all of my avenues seemed to yield improvements though. 
+I had an expirement where each of our three variables were tested with different weights to find optimal settings.
+The three variables involved were: team strength, matchup strength, and team size.
+
+For this I randomly created values for these settings and simulated 1000 battles each to test accuarcy.
+In the end I simulated a total of 3000000 battles, but did not yield any positive results that increased winrate.
+This seemed like an entirely brute force approach and I could have improved my selection of testing settings for future iterations
+
+With the end health guesser I was now up to 65% winrate on the zero guesser
+It seemed to be particuarly good at guessing health in unbalanced scenarios which zero_guesser lacks
+
+At this point I explored creating a direct unbalanced rating.
+This rating signified how much stronger the winning team was then the losing team.
+This only factored in the team strengths (which at this point are now just multiplied by matchup strength after the failed adventure)
+
+There were a couple branches I used this strength for
+First I tested if it should simply guess 0,0 in scenarios where the teams were too closely balanced.
+This was actually a breakthrough which had ud with 50% winrate 35% tiereate with the zero guesser.
+
+From here I explored guessing low values such as 0.01 for the winner in this scenario to minimize
+losses even more since we know they had to have non zero health if they won.
+This got us up to 75% winrate and was the last optimization in this assingnment where I saw a drop in loss for this main assignment simulator
+
+After this I continued to think about unit combinations and how certain stas correlate.
+I feel like since the entire combat is 1 on 1 battles unit combinations essentially dont matter
+I tested this with 2 unit 0s and 1 unit 8 (the worst unit but a tank) vs 3 unit 0s.
+The 3 unit 0s won 55% of the time and with this I know that not even tanks doing chip damage
+make combinations better. All that matters is direct average and individual unit strength
+
+My final optimizationw as a rewrite to the end health calculating section. I didn't like that I was simply guessing
+whether the unit would have 0 health or 100% health based on their tier quality. 
+For this I created ranges of likely health correlating with their defense stat
+For each of this ranges I guessed what the resulting health of the team would be once again going back to the unbalanced stat
+If the match was balanced then units were likely to have low health percentages and vice versa. 
+
+This didnt seem to have that much of an effect on loss, but it firmly cemented us at 80-83% winrate over the zero_guesser
+
+I'd say that's smashes my initial goals and feels about as optimized as I am going to get with this hw
+
+
+Extra Note:
+I intended to create an online editor to watch the battles, but currently just made an editor to submit the AI's
+This can be found here: https://sophiewalden.github.io/COS498_AI_Arena/
+It outlines the goal for the problem as detailed in the comments and gives way for people to test online against
+the zero_guesser and quickly find their loss rates while testing.
+
+"""
+
+
 import random
 import math
 import matplotlib.pyplot as plt
@@ -21,11 +160,13 @@ unit_templates = [
     [10, 10, 20, 10, 10],
     [10, 10, 10, 20, 10],
     [10, 10, 10, 10, 20],
+
     [30, 20, 5, 10, 10],
     [10, 30, 20, 5, 10],
     [10, 10, 30, 20, 5],
     [5, 10, 10, 30, 20],
     [20, 5, 10, 10, 30],
+
     [40, 5, 10, 20, 30],
     [30, 40, 5, 10, 20],
     [20, 30, 40, 5, 10],
@@ -267,7 +408,7 @@ matchup_stats = {0: {0: 53.3, 1: 48.0, 2: 35.8, 3: 66.8, 4: 65.1, 5: 24.1, 6: 13
 14: {0: 96.0, 1: 95.8, 2: 96.0, 3: 99.6, 4: 99.6, 5: 49.9, 6: 48.0, 7: 53.6, 8: 100.0, 9: 97.1, 10: 48.1, 11: 1.0, 12: 1.6, 13: 10.3, 14: 48.9}}
 
 def fitness_actor(actr):
-    return piece_values_attempt2[actr.ID] ** 4
+    return (piece_values_attempt2[actr.ID] / 1400) ** 4
 
 def fitness_team(team):
     return sum(fitness_actor(actor) for actor in team)
